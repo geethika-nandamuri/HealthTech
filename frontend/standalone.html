@@ -1,0 +1,351 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareLink Standalone</title>
+    <style>
+      :root{--bg:#0f172a;--panel:#111827;--accent:#06b6d4;--text:#e5e7eb;--muted:#9ca3af}
+      *{box-sizing:border-box} html,body,#app{height:100%}
+      body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+      .navbar{background:var(--panel);border-bottom:1px solid #1f2937;display:flex;justify-content:space-between;padding:12px 16px}
+      .brand{display:flex;gap:10px;align-items:center;font-weight:700}
+      .brand-badge{background:var(--accent);color:#001018;border-radius:8px;padding:2px 8px;font-size:12px}
+      .container{max-width:1100px;margin:24px auto;padding:0 16px}
+      .card{background:var(--panel);border:1px solid #1f2937;border-radius:12px;padding:16px}
+      .grid{display:grid;gap:16px}
+      .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #374151;background:#0b1220;color:var(--text)}
+      .btn{background:var(--accent);color:#001018;border:none;border-radius:8px;padding:10px 14px;font-weight:600;cursor:pointer}
+      .label{display:block;margin:10px 0 6px;color:var(--muted)}
+      .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#0b1220;border:1px solid #1f2937;color:var(--muted)}
+      .row{display:flex;gap:12px;align-items:center}
+      .space{height:16px}
+      a{color:var(--text);text-decoration:none;margin-right:12px}
+    </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.development.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      const { useState, useEffect, useMemo, createContext, useContext } = React;
+      const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate, Outlet } = ReactRouterDOM;
+
+      const MockDB = (()=>{
+        const db = {
+          users:[{id:'u1',name:'Dr. Ada',email:'ada@care.link',password:'test',role:'doctor'},{id:'u2',name:'Alex Patient',email:'alex@care.link',password:'test',role:'patient'}],
+          currentUserId:null,
+          appointments:[{id:'a1',patientId:'u2',doctorId:'u1',datetime:new Date().toISOString(),status:'pending',reason:'Fever and cough'}],
+          reminders:[{id:'r1',userId:'u2',text:'Take medicine',time:'21:00'}],
+        };
+        return {
+          login({email,password}){ const u=db.users.find(x=>x.email===email&&x.password===password); if(!u) throw new Error('Invalid'); db.currentUserId=u.id; return {token:'t-'+u.id,user:{id:u.id,name:u.name,email:u.email,role:u.role}}},
+          register({name,email,password,role}){ if(db.users.some(u=>u.email===email)) throw new Error('Used'); const id='u'+(db.users.length+1); const u={id,name,email,password,role:role||'patient'}; db.users.push(u); db.currentUserId=id; return {token:'t-'+id,user:{id,name,email,role:u.role}}},
+          patients(){ return db.users.filter(u=>u.role==='patient').map(u=>({id:u.id,name:u.name,email:u.email})) },
+          appts(){ return db.appointments },
+          addAppt({patientId,datetime,reason}){ const id='a'+(db.appointments.length+1); const doctorId='u1'; const a={id,patientId,doctorId,datetime,reason,status:'pending'}; db.appointments.push(a); return a },
+          reminders(){ return db.reminders },
+          addReminder({text,time}){ const id='r'+(db.reminders.length+1); const userId=db.currentUserId||'u2'; const r={id,userId,text,time}; db.reminders.push(r); return r },
+          analyze({symptoms}){ const s=(symptoms||'').toLowerCase(); if(s.includes('fever')&&s.includes('cough')) return {suggestion:'Flu-like symptoms, please consult a doctor.'}; if(s.includes('headache')) return {suggestion:'Hydrate and rest. If persistent, book an appointment.'}; return {suggestion:'Monitor symptoms. If they worsen, consult a doctor.'} }
+        }
+      })();
+
+      const AuthCtx = createContext(null);
+      function AuthProvider({children}){
+        const [user,setUser]=useState(null);
+        const [token,setToken]=useState(null);
+        const [loading,setLoading]=useState(false);
+        const login=async(e,p)=>{ const r=MockDB.login({email:e,password:p}); setUser(r.user); setToken(r.token); };
+        const register=async(payload)=>{ const r=MockDB.register(payload); setUser(r.user); setToken(r.token); };
+        const logout=()=>{ setUser(null); setToken(null); };
+        const v=useMemo(()=>({user,token,loading,login,register,logout}),[user,token,loading]);
+        return React.createElement(AuthCtx.Provider,{value:v},children);
+      }
+      const useAuth=()=>useContext(AuthCtx);
+
+      function Navbar(){
+        const {user,logout}=useAuth();
+        return React.createElement('div',{className:'navbar'},
+          React.createElement('div',{className:'brand'},'CareLink',React.createElement('span',{className:'brand-badge'},'beta')),
+          React.createElement('div',null,
+            !user && React.createElement(React.Fragment,null,
+              React.createElement(Link,{to:'/login'},'Login'),' ',
+              React.createElement(Link,{to:'/register'},'Register')
+            ),
+            user && user.role==='patient' && React.createElement(React.Fragment,null,
+              React.createElement(Link,{to:'/patient'},'Home'),' ',
+              React.createElement(Link,{to:'/patient/appointments'},'Appointments'),' ',
+              React.createElement(Link,{to:'/patient/reminders'},'Reminders')
+            ),
+            user && user.role==='doctor' && React.createElement(React.Fragment,null,
+              React.createElement(Link,{to:'/doctor'},'Dashboard'),' ',
+              React.createElement(Link,{to:'/doctor/patients'},'Patients'),' ',
+              React.createElement(Link,{to:'/doctor/appointments'},'Appointments'),' ',
+              React.createElement(Link,{to:'/doctor/trends'},'Trends')
+            ),
+            user && React.createElement('button',{className:'btn',onClick:logout},'Logout')
+          )
+        );
+      }
+
+      function ProtectedRoute(){
+        const {user}=useAuth();
+        const loc=useLocation();
+        if(!user) return React.createElement(Navigate,{to:'/login',replace:true,state:{from:loc}});
+        return React.createElement(Outlet);
+      }
+      function RoleRoute({allow}){
+        const {user}=useAuth();
+        if(!user) return React.createElement(Navigate,{to:'/login',replace:true});
+        if(allow && allow.length && !allow.includes(user.role)) return React.createElement(Navigate,{to:'/',replace:true});
+        return React.createElement(Outlet);
+      }
+
+      function Chatbot(){
+        const [messages,setMessages]=useState([{role:'bot',text:'Describe your symptoms.'}]);
+        const [input,setInput]=useState('');
+        const [loading,setLoading]=useState(false);
+        const send=()=>{
+          if(!input.trim())return; const userMsg={role:'user',text:input}; setMessages(m=>[...m,userMsg]); setInput(''); setLoading(true);
+          const res=MockDB.analyze({symptoms:userMsg.text}); setMessages(m=>[...m,{role:'bot',text:res.suggestion}]); setLoading(false);
+        };
+        return React.createElement('div',{className:'card'},
+          React.createElement('div',{style:{maxHeight:260,overflowY:'auto'}},
+            messages.map((m,i)=>React.createElement('div',{key:i,className:'row'},React.createElement('span',{className:'pill'},m.role==='bot'?'Bot':'You'),' ',m.text))
+          ),
+          React.createElement('div',{className:'space'}),
+          React.createElement('div',{className:'row'},
+            React.createElement('input',{className:'input',placeholder:'Type symptoms...',value:input,onChange:e=>setInput(e.target.value),onKeyDown:e=>e.key==='Enter'&&send()}),
+            React.createElement('button',{className:'btn',onClick:send,disabled:loading},loading?'Thinking...':'Send')
+          )
+        );
+      }
+
+      function SymptomForm(){
+        const [symptoms,setSymptoms]=useState('Fever and cough');
+        const [duration,setDuration]=useState('2 days');
+        const [severity,setSeverity]=useState('moderate');
+        const [suggestion,setSuggestion]=useState('');
+        const submit=(e)=>{ e.preventDefault(); const r=MockDB.analyze({symptoms}); setSuggestion(r.suggestion) };
+        return React.createElement('div',{className:'card'},
+          React.createElement('h3',null,'Report symptoms'),
+          React.createElement('form',{onSubmit:submit},
+            React.createElement('label',{className:'label'},'Symptoms'),
+            React.createElement('input',{className:'input',value:symptoms,onChange:e=>setSymptoms(e.target.value)}),
+            React.createElement('label',{className:'label'},'Duration'),
+            React.createElement('input',{className:'input',value:duration,onChange:e=>setDuration(e.target.value)}),
+            React.createElement('label',{className:'label'},'Severity'),
+            React.createElement('select',{className:'input',value:severity,onChange:e=>setSeverity(e.target.value)},
+              React.createElement('option',{value:'mild'},'Mild'),
+              React.createElement('option',{value:'moderate'},'Moderate'),
+              React.createElement('option',{value:'severe'},'Severe')
+            ),
+            React.createElement('div',{className:'space'}),
+            React.createElement('button',{className:'btn'},'Submit')
+          ),
+          suggestion && React.createElement(React.Fragment,null,
+            React.createElement('div',{className:'space'}),
+            React.createElement('div',{className:'pill'},'Suggestion'),
+            React.createElement('p',null,suggestion)
+          )
+        );
+      }
+
+      function Login(){
+        const {login}=useAuth();
+        const [email,setEmail]=useState('alex@care.link');
+        const [password,setPassword]=useState('test');
+        const [error,setError]=useState('');
+        const nav=useNavigate();
+        const submit=(e)=>{e.preventDefault(); try{ login(email,password); nav('/'); }catch(ex){ setError('Login failed') }};
+        return React.createElement('div',{className:'container'},
+          React.createElement('div',{className:'card',style:{maxWidth:420,margin:'40px auto'}},
+            React.createElement('h2',null,'Login'), error && React.createElement('p',{style:{color:'#fca5a5'}},error),
+            React.createElement('form',{onSubmit:submit},
+              React.createElement('label',{className:'label'},'Email'),
+              React.createElement('input',{className:'input',value:email,onChange:e=>setEmail(e.target.value)}),
+              React.createElement('label',{className:'label'},'Password'),
+              React.createElement('input',{className:'input',type:'password',value:password,onChange:e=>setPassword(e.target.value)}),
+              React.createElement('div',{className:'space'}),
+              React.createElement('button',{className:'btn'},'Login')
+            )
+          )
+        );
+      }
+      function Register(){
+        const {register}=useAuth();
+        const [name,setName]=useState('');
+        const [email,setEmail]=useState('');
+        const [password,setPassword]=useState('');
+        const [role,setRole]=useState('patient');
+        const nav=useNavigate();
+        const submit=(e)=>{e.preventDefault(); try{ register({name,email,password,role}); nav('/') }catch(ex){} };
+        return React.createElement('div',{className:'container'},
+          React.createElement('div',{className:'card',style:{maxWidth:520,margin:'40px auto'}},
+            React.createElement('h2',null,'Create account'),
+            React.createElement('form',{onSubmit:submit},
+              React.createElement('label',{className:'label'},'Name'),
+              React.createElement('input',{className:'input',value:name,onChange:e=>setName(e.target.value)}),
+              React.createElement('label',{className:'label'},'Email'),
+              React.createElement('input',{className:'input',value:email,onChange:e=>setEmail(e.target.value)}),
+              React.createElement('label',{className:'label'},'Password'),
+              React.createElement('input',{className:'input',type:'password',value:password,onChange:e=>setPassword(e.target.value)}),
+              React.createElement('label',{className:'label'},'Role'),
+              React.createElement('select',{className:'input',value:role,onChange:e=>setRole(e.target.value)},
+                React.createElement('option',{value:'patient'},'Patient'),
+                React.createElement('option',{value:'doctor'},'Doctor')
+              ),
+              React.createElement('div',{className:'space'}),
+              React.createElement('button',{className:'btn'},'Create account')
+            )
+          )
+        );
+      }
+
+      function PatientAppointments(){
+        const {user}=useAuth();
+        const [items,setItems]=useState(MockDB.appts());
+        const [datetime,setDatetime]=useState('');
+        const [reason,setReason]=useState('');
+        const book=()=>{ MockDB.addAppt({patientId:user.id,datetime,reason}); setDatetime(''); setReason(''); setItems(MockDB.appts()); };
+        return React.createElement('div',{className:'grid'},
+          React.createElement('div',{className:'card'},
+            React.createElement('h3',null,'Book appointment'),
+            React.createElement('label',{className:'label'},'Date/time'),
+            React.createElement('input',{className:'input',type:'datetime-local',value:datetime,onChange:e=>setDatetime(e.target.value)}),
+            React.createElement('label',{className:'label'},'Reason'),
+            React.createElement('input',{className:'input',value:reason,onChange:e=>setReason(e.target.value)}),
+            React.createElement('div',{className:'space'}),
+            React.createElement('button',{className:'btn',onClick:book},'Book')
+          ),
+          React.createElement('div',{className:'card'},
+            React.createElement('h3',null,'Your appointments'),
+            React.createElement('table',{className:'table'},
+              React.createElement('thead',null,React.createElement('tr',null,React.createElement('th',null,'When'),React.createElement('th',null,'Reason'),React.createElement('th',null,'Status'))),
+              React.createElement('tbody',null,
+                items.filter(a=>a.patientId===user.id).map(a=>React.createElement('tr',{key:a.id},React.createElement('td',null,new Date(a.datetime).toLocaleString()),React.createElement('td',null,a.reason),React.createElement('td',null,a.status)))
+              )
+            )
+          )
+        );
+      }
+      function PatientReminders(){
+        const [items,setItems]=useState(MockDB.reminders());
+        const [text,setText]=useState('Take medicine');
+        const [time,setTime]=useState('21:00');
+        const add=()=>{ MockDB.addReminder({text,time}); setText(''); setTime(''); setItems(MockDB.reminders()); };
+        return React.createElement('div',{className:'grid'},
+          React.createElement('div',{className:'card'},
+            React.createElement('h3',null,'Create reminder'),
+            React.createElement('label',{className:'label'},'Text'),
+            React.createElement('input',{className:'input',value:text,onChange:e=>setText(e.target.value)}),
+            React.createElement('label',{className:'label'},'Time'),
+            React.createElement('input',{className:'input',type:'time',value:time,onChange:e=>setTime(e.target.value)}),
+            React.createElement('div',{className:'space'}),
+            React.createElement('button',{className:'btn',onClick:add},'Add')
+          ),
+          React.createElement('div',{className:'card'},
+            React.createElement('h3',null,'Your reminders'),
+            React.createElement('ul',null,items.map(r=>React.createElement('li',{key:r.id},r.text,' at ',r.time)))
+          )
+        );
+      }
+
+      function DoctorDashboard(){
+        const [patients,setPatients]=useState(MockDB.patients());
+        const [appointments,setAppointments]=useState(MockDB.appts());
+        const counts=appointments.reduce((a,x)=>{const d=new Date(x.datetime).toDateString();a[d]=(a[d]||0)+1;return a},{});
+        return React.createElement('div',{className:'grid three'},
+          React.createElement('div',{className:'card'},React.createElement('h3',null,'Patients'),React.createElement('p',{className:'label'},'Total: ',patients.length)),
+          React.createElement('div',{className:'card'},React.createElement('h3',null,'Appointments'),React.createElement('p',{className:'label'},'Total: ',appointments.length)),
+          React.createElement('div',{className:'card'},React.createElement('h3',null,'This week'),React.createElement('ul',null,Object.entries(counts).map(([d,c])=>React.createElement('li',{key:d},d,': ',c))))
+        );
+      }
+      function DoctorPatients(){
+        const patients=MockDB.patients();
+        return React.createElement('div',{className:'card'},
+          React.createElement('h3',null,'Patients'),
+          React.createElement('table',{className:'table'},
+            React.createElement('thead',null,React.createElement('tr',null,React.createElement('th',null,'Name'),React.createElement('th',null,'Email'))),
+            React.createElement('tbody',null,patients.map(p=>React.createElement('tr',{key:p.id},React.createElement('td',null,p.name),React.createElement('td',null,p.email))))
+          )
+        );
+      }
+      function DoctorAppointments(){
+        const items=MockDB.appts();
+        return React.createElement('div',{className:'card'},
+          React.createElement('h3',null,'Appointments'),
+          React.createElement('table',{className:'table'},
+            React.createElement('thead',null,React.createElement('tr',null,React.createElement('th',null,'When'),React.createElement('th',null,'Patient'),React.createElement('th',null,'Reason'),React.createElement('th',null,'Status'))),
+            React.createElement('tbody',null,items.map(a=>React.createElement('tr',{key:a.id},React.createElement('td',null,new Date(a.datetime).toLocaleString()),React.createElement('td',null,a.patientId),React.createElement('td',null,a.reason),React.createElement('td',null,React.createElement('span',{className:'pill'},a.status)))))
+          )
+        );
+      }
+      function DoctorTrends(){
+        const items=MockDB.appts();
+        const counts=items.reduce((a,x)=>{const d=new Date(x.datetime).toDateString();a[d]=(a[d]||0)+1;return a},{});
+        return React.createElement('div',{className:'card'},
+          React.createElement('h3',null,'Community trends'),
+          React.createElement('p',{className:'label'},'Appointments per day'),
+          React.createElement('ul',null,Object.entries(counts).map(([d,c])=>React.createElement('li',{key:d},d,': ',c)))
+        );
+      }
+
+      function HomeRedirect(){
+        const {user}=useAuth(); const loc=useLocation();
+        if(!user) return React.createElement(Navigate,{to:'/login',state:{from:loc},replace:true});
+        if(user.role==='doctor') return React.createElement(Navigate,{to:'/doctor',replace:true});
+        return React.createElement(Navigate,{to:'/patient',replace:true});
+      }
+
+      function Patient(){
+        return React.createElement('div',{className:'container'},
+          React.createElement('div',{className:'grid three'},
+            React.createElement('div',{className:'card'},React.createElement('h3',null,'Welcome'),React.createElement('div',null,React.createElement('a',{href:'/patient/appointments'},'Book appointment'),' ',React.createElement('a',{href:'/patient/reminders'},'Set reminder'))),
+            React.createElement(Chatbot),
+            React.createElement(SymptomForm)
+          )
+        );
+      }
+
+      function App(){
+        return React.createElement(AuthProvider,null,
+          React.createElement(BrowserRouter,null,
+            React.createElement(Navbar,null),
+            React.createElement('div',{className:'container'},
+              React.createElement(Routes,null,
+                React.createElement(Route,{path:'/',element:React.createElement(HomeRedirect)}),
+                React.createElement(Route,{path:'/login',element:React.createElement(Login)}),
+                React.createElement(Route,{path:'/register',element:React.createElement(Register)}),
+                React.createElement(Route,{element:React.createElement(ProtectedRoute)},
+                  React.createElement(Route,{element:React.createElement(RoleRoute,{allow:['patient']})},
+                    React.createElement(Route,{path:'/patient',element:React.createElement(Patient)}),
+                    React.createElement(Route,{path:'/patient/appointments',element:React.createElement(PatientAppointments)}),
+                    React.createElement(Route,{path:'/patient/reminders',element:React.createElement(PatientReminders)})
+                  ),
+                  React.createElement(Route,{element:React.createElement(RoleRoute,{allow:['doctor']})},
+                    React.createElement(Route,{path:'/doctor',element:React.createElement(DoctorDashboard)}),
+                    React.createElement(Route,{path:'/doctor/patients',element:React.createElement(DoctorPatients)}),
+                    React.createElement(Route,{path:'/doctor/appointments',element:React.createElement(DoctorAppointments)}),
+                    React.createElement(Route,{path:'/doctor/trends',element:React.createElement(DoctorTrends)})
+                  )
+                ),
+                React.createElement(Route,{path:'*',element:React.createElement(Navigate,{to:'/',replace:true})})
+              )
+            )
+          )
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById('app')).render(React.createElement(App));
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
