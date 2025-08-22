@@ -56,7 +56,7 @@ export default function PatientDashboard(){
               </div>
               <span className="action-arrow">→</span>
             </a>
-            <a href="/patient/symptoms" className="action-link">
+            <a href="/patient/health-records" className="action-link">
               <span className="action-icon">📊</span>
               <div className="action-content">
                 <span className="action-title">Health Records</span>

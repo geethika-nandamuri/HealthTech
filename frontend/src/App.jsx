@@ -7,6 +7,8 @@ import Register from './pages/Register.jsx'
 import PatientDashboard from './pages/patient/Dashboard.jsx'
 import PatientAppointments from './pages/patient/Appointments.jsx'
 import PatientReminders from './pages/patient/Reminders.jsx'
+import PatientHealthRecords from './pages/patient/HealthRecords.jsx'
+import PatientProfile from './pages/patient/Profile.jsx'
 import DoctorDashboard from './pages/doctor/Dashboard.jsx'
 import DoctorPatients from './pages/doctor/Patients.jsx'
 import DoctorAppointments from './pages/doctor/Appointments.jsx'
@@ -36,6 +38,8 @@ export default function App() {
               <Route path="/patient" element={<PatientDashboard />} />
               <Route path="/patient/appointments" element={<PatientAppointments />} />
               <Route path="/patient/reminders" element={<PatientReminders />} />
+              <Route path="/patient/health-records" element={<PatientHealthRecords />} />
+              <Route path="/patient/profile" element={<PatientProfile />} />
             </Route>
 
             <Route element={<RoleRoute allow={["doctor"]} />}>

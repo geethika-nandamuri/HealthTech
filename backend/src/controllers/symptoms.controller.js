@@ -33,16 +33,35 @@ export async function analyzeSymptoms(req, res) {
 
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
-    const result = await model.generateContent(
-      `The patient reports: ${symptoms}.
-      Please suggest possible advice in very simple, non-technical language.`
-    )
+    // 🎯 HELPFUL: Provide remedies and practical advice for symptoms
+    const systemPrompt = `
+You are MediGuide, a caring AI health assistant.
 
+CRITICAL RULES:
+- Keep responses to 2-3 sentences maximum
+- Provide practical remedies and tips
+- Be warm and encouraging
+- Use simple, everyday language
+- Add 1-2 emojis for warmth
+- Only suggest doctor if symptoms are severe/persistent
+
+Examples of good responses:
+- "🤧 Try honey tea, rest, and steam inhalation for cold symptoms! 💙"
+- "😴 Get 8 hours sleep, reduce caffeine, and try light exercise for fatigue! 💙"
+- "🤒 Rest, drink fluids, and take acetaminophen for fever. See doctor if above 103°F! 💙"
+- "😵‍💫 Try dark room rest, hydration, and over-the-counter pain relievers for headaches! 💙"
+
+Give helpful remedies first, then mention doctor only if needed! 💙
+`;
+
+    const fullPrompt = `${systemPrompt}\n\nPatient reports: ${symptoms}\n\nMediGuide's advice:`
+
+    const result = await model.generateContent(fullPrompt)
     const suggestion = result.response.text()
 
     return res.json({ suggestion })
   } catch (err) {
     console.error("AI Error:", err)
-    return res.status(500).json({ suggestion: "Sorry, AI service is unavailable." })
+    return res.status(500).json({ suggestion: "⚠️ I'm having trouble analyzing symptoms right now. Please try again or consult a doctor! 💙" })
   }
 }

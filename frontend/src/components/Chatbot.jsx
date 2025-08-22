@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { apiClient } from '../services/apiClient.js'
 
 export default function Chatbot(){
-  const [messages, setMessages] = useState([{ role: 'bot', text: 'Hello! I\'m your AI health assistant. Describe your symptoms and I\'ll provide helpful guidance.' }])
+  const [messages, setMessages] = useState([{ 
+    role: 'bot', 
+    text: 'Hi there! 👋 I\'m MediGuide, your friendly AI health assistant. Tell me how you\'re feeling and I\'ll do my best to help! 💙' 
+  }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,7 +19,10 @@ export default function Chatbot(){
       const res = await apiClient.post('/symptoms/analyze', { symptoms: userMsg.text })
       setMessages(prev => [...prev, { role: 'bot', text: res.suggestion }])
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, I\'m having trouble connecting right now. Please try again.' }])
+      setMessages(prev => [...prev, { 
+        role: 'bot', 
+        text: '⚠️ Oops! I\'m having trouble connecting right now. Please try again in a moment! 💙' 
+      }])
     } finally {
       setLoading(false)
     }
