@@ -16,7 +16,11 @@ const port = process.env.PORT || 5700
 app.use(cors())
 app.use(express.json())
 
-app.get('/health', (_, res) => res.json({ ok: true }))
+// ✅ Root route (important for Render health check)
+app.get("/", (_, res) => res.send("Backend is running 🚀"))
+
+// ✅ Health check route
+app.get("/health", (_, res) => res.json({ ok: true }))
 
 app.use('/auth', authRoutes)
 app.use('/patients', patientRoutes)
@@ -32,7 +36,3 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
   console.error('Mongo connection failed', err)
   process.exit(1)
 })
-
-
-
-
