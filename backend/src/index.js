@@ -16,17 +16,15 @@ const port = process.env.PORT || 5700
 app.use(cors())
 app.use(express.json())
 
-// ✅ Root route (important for Render health check)
-app.get("/", (_, res) => res.send("Backend is running 🚀"))
+app.get('/', (_, res) => res.json({ ok: true, message: "Backend root working" }))
+app.get('/health', (_, res) => res.json({ ok: true }))
 
-// ✅ Health check route
-app.get("/health", (_, res) => res.json({ ok: true }))
-
-app.use('/auth', authRoutes)
-app.use('/patients', patientRoutes)
-app.use('/appointments', appointmentRoutes)
-app.use('/reminders', reminderRoutes)
-app.use('/symptoms', symptomRoutes)
+// ✅ all routes prefixed with /api
+app.use('/api/auth', authRoutes)
+app.use('/api/patients', patientRoutes)
+app.use('/api/appointments', appointmentRoutes)
+app.use('/api/reminders', reminderRoutes)
+app.use('/api/symptoms', symptomRoutes)
 app.use('/api/chat', chatRoutes)
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
