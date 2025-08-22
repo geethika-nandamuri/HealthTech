@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { apiClient } from '../services/apiClient.js'
 
 export default function Chatbot(){
-  const [messages, setMessages] = useState([{ role: 'bot', text: 'Describe your symptoms.' }])
+  const [messages, setMessages] = useState([{ role: 'bot', text: 'Hello! I\'m your AI health assistant. Describe your symptoms and I\'ll provide helpful guidance.' }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,33 +16,81 @@ export default function Chatbot(){
       const res = await apiClient.post('/symptoms/analyze', { symptoms: userMsg.text })
       setMessages(prev => [...prev, { role: 'bot', text: res.suggestion }])
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, something went wrong.' }])
+      setMessages(prev => [...prev, { role: 'bot', text: 'Sorry, I\'m having trouble connecting right now. Please try again.' }])
     } finally {
       setLoading(false)
     }
   }
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      send()
+    }
+  }
+
   return (
     <div className="card">
-      <div style={{ maxHeight: 260, overflowY: 'auto', display: 'grid', gap: 8 }}>
+      <div className="chat-header">
+        <div className="chat-title">
+          <div className="chat-icon">🤖</div>
+          <h3>AI Health Assistant</h3>
+        </div>
+        <div className="chat-status">
+          <span className="status-dot"></span>
+          Online
+        </div>
+      </div>
+      
+      <div className="chatbot-container">
         {messages.map((m, idx) => (
-          <div key={idx} className="row">
-            <span className="pill">{m.role === 'bot' ? 'Bot' : 'You'}</span>
-            <span>{m.text}</span>
+          <div key={idx} className={`chat-message ${m.role}`}>
+            <div className="message-avatar">
+              {m.role === 'bot' ? '🤖' : '👤'}
+            </div>
+            <div className="message-content">
+              <div className="message-text">{m.text}</div>
+              <div className="message-time">
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
           </div>
         ))}
+        {loading && (
+          <div className="chat-message bot">
+            <div className="message-avatar">🤖</div>
+            <div className="message-content">
+              <div className="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-      <div className="space" />
-      <div className="row">
-        <input className="input" placeholder="Type symptoms..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e=> e.key==='Enter' && send()} />
-        <button className="btn" onClick={send} disabled={loading}>{loading? 'Thinking...' : 'Send'}</button>
+      
+      <div className="chat-input-container">
+        <input 
+          className="chat-input" 
+          placeholder="Describe your symptoms..." 
+          value={input} 
+          onChange={e => setInput(e.target.value)} 
+          onKeyPress={handleKeyPress}
+          disabled={loading}
+        />
+        <button 
+          className="btn send-btn" 
+          onClick={send} 
+          disabled={loading || !input.trim()}
+        >
+          {loading ? (
+            <span className="loading-spinner">⏳</span>
+          ) : (
+            <span>Send</span>
+          )}
+        </button>
       </div>
     </div>
   )
 }
-
-
-
-
-
-

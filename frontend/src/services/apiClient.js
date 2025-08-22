@@ -106,9 +106,29 @@ class MockDatabase {
   }
   analyzeSymptoms({ symptoms }) {
     const text = (symptoms || '').toLowerCase()
-    if (text.includes('fever') && text.includes('cough')) return { suggestion: 'Flu-like symptoms, please consult a doctor.' }
-    if (text.includes('headache')) return { suggestion: 'Hydrate and rest. If persistent, book an appointment.' }
-    return { suggestion: 'Monitor symptoms. If they worsen, consult a doctor.' }
+    
+    // More comprehensive symptom analysis
+    if (text.includes('cold') || text.includes('runny nose') || text.includes('congestion')) {
+      return { suggestion: 'Common cold symptoms. Rest, stay hydrated, and consider over-the-counter decongestants. If symptoms persist beyond 10 days or worsen, see a doctor.' }
+    }
+    if (text.includes('fever') && text.includes('cough')) {
+      return { suggestion: 'Flu-like symptoms detected. Rest, stay hydrated, and monitor your temperature. If fever exceeds 103°F or persists for more than 3 days, seek medical attention.' }
+    }
+    if (text.includes('headache')) {
+      return { suggestion: 'For headaches: rest in a quiet, dark room, stay hydrated, and try over-the-counter pain relievers. If severe, sudden, or accompanied by other symptoms, seek immediate medical care.' }
+    }
+    if (text.includes('sore throat')) {
+      return { suggestion: 'Sore throat can be caused by viral infections. Gargle with warm salt water, stay hydrated, and rest. If severe or accompanied by fever, see a doctor.' }
+    }
+    if (text.includes('nausea') || text.includes('vomiting')) {
+      return { suggestion: 'Stay hydrated with small sips of water or clear fluids. Rest and avoid solid foods until symptoms improve. If severe or persistent, seek medical attention.' }
+    }
+    if (text.includes('fatigue') || text.includes('tired')) {
+      return { suggestion: 'Fatigue can be due to various factors. Ensure adequate sleep, maintain a balanced diet, and stay hydrated. If persistent or severe, consider consulting a healthcare provider.' }
+    }
+    
+    // Default response for unrecognized symptoms
+    return { suggestion: 'I understand you\'re experiencing symptoms. While I can provide general guidance, it\'s important to monitor your condition. If symptoms are severe, persistent, or concerning, please consult with a healthcare professional for proper evaluation.' }
   }
 }
 

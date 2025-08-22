@@ -8,6 +8,7 @@ import patientRoutes from './routes/patients.routes.js'
 import appointmentRoutes from './routes/appointments.routes.js'
 import reminderRoutes from './routes/reminders.routes.js'
 import symptomRoutes from './routes/symptoms.routes.js'
+import chatRoutes from './routes/chat.routes.js'
 
 const app = express()
 const port = process.env.PORT || 5700
@@ -22,6 +23,7 @@ app.use('/patients', patientRoutes)
 app.use('/appointments', appointmentRoutes)
 app.use('/reminders', reminderRoutes)
 app.use('/symptoms', symptomRoutes)
+app.use('/api/chat', chatRoutes)
 
 mongoose.connect(process.env.MONGO_URI).then(() => {
   console.log('MongoDB connected')
@@ -30,6 +32,7 @@ mongoose.connect(process.env.MONGO_URI).then(() => {
   console.error('Mongo connection failed', err)
   process.exit(1)
 })
+
 
 
 

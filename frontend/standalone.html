@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CareLink Standalone</title>
+    <title>MediGuide Standalone</title>
     <style>
       :root{--bg:#0f172a;--panel:#111827;--accent:#06b6d4;--text:#e5e7eb;--muted:#9ca3af}
       *{box-sizing:border-box} html,body,#app{height:100%}
@@ -68,7 +68,7 @@
       function Navbar(){
         const {user,logout}=useAuth();
         return React.createElement('div',{className:'navbar'},
-          React.createElement('div',{className:'brand'},'CareLink',React.createElement('span',{className:'brand-badge'},'beta')),
+          React.createElement('div',{className:'brand'},'MediGuide',React.createElement('span',{className:'brand-badge'},'beta')),
           React.createElement('div',null,
             !user && React.createElement(React.Fragment,null,
               React.createElement(Link,{to:'/login'},'Login'),' ',

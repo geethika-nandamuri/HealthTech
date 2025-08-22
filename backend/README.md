@@ -1,4 +1,4 @@
-# CareLink Backend
+# MediGuide Backend
 
 Express + MongoDB backend providing APIs for auth, patients, appointments, reminders, and symptoms.
 
@@ -6,7 +6,7 @@ Express + MongoDB backend providing APIs for auth, patients, appointments, remin
 1. Create env as `backend/.env`:
 ```
 PORT=5700
-MONGO_URI=mongodb://127.0.0.1:27017/carelink
+MONGO_URI=mongodb://127.0.0.1:27017/mediguide
 JWT_SECRET=supersecretchangeme
 JWT_EXPIRES_IN=7d
 ```
