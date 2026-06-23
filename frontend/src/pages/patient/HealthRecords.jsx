@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function HealthRecords(){
@@ -35,8 +35,8 @@ export default function HealthRecords(){
   const loadRecords = async () => {
     try {
       setLoading(true)
-      const data = await apiClient.get('/health-records')
-      setRecords(data)
+      const data = await apiClient.get('/api/health-records')
+      setRecords(data.data)
     } catch (e) {
       setError('Failed to load health records')
     } finally {
@@ -53,7 +53,7 @@ export default function HealthRecords(){
     if (!newRecord.title.trim()) return
     
     try {
-      await apiClient.post('/health-records', {
+      await apiClient.post('/api/health-records', {
         ...newRecord,
         category: 'manual',
         date: new Date().toISOString()

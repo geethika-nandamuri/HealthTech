@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { apiClient } from '../services/apiClient.js'
+import apiClient from '../services/apiClient.js'
 
 export default function Chatbot(){
   const [messages, setMessages] = useState([{ 
@@ -16,8 +16,8 @@ export default function Chatbot(){
     setInput('')
     setLoading(true)
     try {
-      const res = await apiClient.post('/symptoms/analyze', { symptoms: userMsg.text })
-      setMessages(prev => [...prev, { role: 'bot', text: res.suggestion }])
+      const res = await apiClient.post('/api/symptoms/analyze', { symptoms: userMsg.text })
+      setMessages(prev => [...prev, { role: 'bot', text: res.data.suggestion }])
     } catch (e) {
       setMessages(prev => [...prev, { 
         role: 'bot', 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 
 export default function DoctorPatients(){
   const [patients, setPatients] = useState([])
-  useEffect(() => { apiClient.get('/patients').then(setPatients) }, [])
+  useEffect(() => { apiClient.get('/api/patients').then(r => setPatients(r.data)) }, [])
   return (
     <div className="card">
       <h3>Patients</h3>

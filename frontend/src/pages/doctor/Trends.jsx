@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 
 export default function DoctorTrends(){
   const [appointments, setAppointments] = useState([])
-  useEffect(() => { apiClient.get('/appointments').then(setAppointments) }, [])
+  useEffect(() => { apiClient.get('/api/appointments').then(r => setAppointments(r.data)) }, [])
 
   const counts = appointments.reduce((acc, a) => {
     const d = new Date(a.datetime).toDateString()

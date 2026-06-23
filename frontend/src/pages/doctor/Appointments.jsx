@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 
 export default function DoctorAppointments(){
   const [items, setItems] = useState([])
-  const load = async () => setItems(await apiClient.get('/appointments'))
+  const load = async () => setItems((await apiClient.get('/api/appointments')).data)
   useEffect(() => { load() }, [])
   return (
     <div className="card">

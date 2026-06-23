@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 
 export default function DoctorDashboard(){
   const [patients, setPatients] = useState([])
   const [appointments, setAppointments] = useState([])
 
   useEffect(() => {
-    Promise.all([apiClient.get('/patients'), apiClient.get('/appointments')]).then(([p, a]) => {
-      setPatients(p); setAppointments(a)
+    Promise.all([apiClient.get('/api/patients'), apiClient.get('/api/appointments')]).then(([p, a]) => {
+      setPatients(p.data); setAppointments(a.data)
     })
   }, [])
 

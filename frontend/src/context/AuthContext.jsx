@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { apiClient } from '../services/apiClient.js'
+import apiClient from '../services/apiClient.js'
 
 const AuthContext = createContext(null)
 
@@ -14,33 +14,29 @@ export function AuthProvider({ children }) {
       const parsed = JSON.parse(stored)
       setUser(parsed.user)
       setToken(parsed.token)
-      apiClient.setToken(parsed.token)
     }
     setLoading(false)
   }, [])
 
   const login = async (email, password) => {
-    const res = await apiClient.post('/auth/login', { email, password })
-    setUser(res.user)
-    setToken(res.token)
-    apiClient.setToken(res.token)
-    localStorage.setItem('auth', JSON.stringify(res))
-    return res
+    const { data } = await apiClient.post('/api/auth/login', { email, password })
+    setUser(data.user)
+    setToken(data.token)
+    localStorage.setItem('auth', JSON.stringify(data))
+    return data
   }
 
   const register = async (payload) => {
-    const res = await apiClient.post('/auth/register', payload)
-    setUser(res.user)
-    setToken(res.token)
-    apiClient.setToken(res.token)
-    localStorage.setItem('auth', JSON.stringify(res))
-    return res
+    const { data } = await apiClient.post('/api/auth/register', payload)
+    setUser(data.user)
+    setToken(data.token)
+    localStorage.setItem('auth', JSON.stringify(data))
+    return data
   }
 
   const logout = () => {
     setUser(null)
     setToken(null)
-    apiClient.setToken(null)
     localStorage.removeItem('auth')
   }
 
@@ -53,9 +49,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
-
-
-
-
-
-

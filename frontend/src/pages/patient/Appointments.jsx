@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 
 export default function PatientAppointments(){
@@ -10,14 +10,14 @@ export default function PatientAppointments(){
   const [error, setError] = useState('')
 
   const load = async () => {
-    try { setItems(await apiClient.get('/appointments')) } catch(e) { setError('Failed to load appointments') }
+    try { setItems((await apiClient.get('/api/appointments')).data) } catch(e) { setError('Failed to load appointments') }
   }
   useEffect(() => { load() }, [])
 
   const book = async () => {
     setError('')
     try {
-      await apiClient.post('/appointments', { patientId: user.id, datetime, reason })
+      await apiClient.post('/api/appointments', { patientId: user.id, datetime, reason })
       setDatetime(''); setReason(''); load()
     } catch (e) { setError('Booking failed') }
   }

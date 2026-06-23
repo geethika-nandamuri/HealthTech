@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { apiClient } from '../services/apiClient.js'
+import apiClient from '../services/apiClient.js'
 
 export default function SymptomForm(){
   const [symptoms, setSymptoms] = useState('')
@@ -15,9 +15,9 @@ export default function SymptomForm(){
     
     setLoading(true)
     try {
-      await apiClient.post('/symptoms', { symptoms, duration, severity })
-      const res = await apiClient.post('/symptoms/analyze', { symptoms })
-      setSuggestion(res.suggestion)
+      await apiClient.post('/api/symptoms', { symptoms, duration, severity })
+      const res = await apiClient.post('/api/symptoms/analyze', { symptoms })
+      setSuggestion(res.data.suggestion)
       setSubmitted(true)
     } catch (error) {
       setSuggestion('Sorry, there was an error processing your symptoms. Please try again.')

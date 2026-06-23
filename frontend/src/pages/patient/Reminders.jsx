@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from '../../services/apiClient.js'
+import apiClient from '../../services/apiClient.js'
 
 export default function PatientReminders(){
   const [items, setItems] = useState([])
   const [text, setText] = useState('Take medicine')
   const [time, setTime] = useState('21:00')
 
-  const load = async () => { setItems(await apiClient.get('/reminders')) }
+  const load = async () => { setItems((await apiClient.get('/api/reminders')).data) }
   useEffect(() => { load() }, [])
 
   const add = async () => {
-    await apiClient.post('/reminders', { text, time })
+    await apiClient.post('/api/reminders', { text, time })
     setText(''); setTime(''); load()
   }
 
