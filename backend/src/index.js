@@ -14,7 +14,21 @@ import healthRecordRoutes from "./routes/healthRecords.routes.js";
 const app = express()
 const port = process.env.PORT || 5700
 
-app.use(cors())
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://healthtech-frontend.onrender.com',
+]
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow REST clients (curl, Postman) and server-to-server calls with no Origin
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error(`CORS: origin ${origin} not allowed`))
+    },
+    credentials: true,
+  })
+)
 app.use(express.json())
 
 app.get('/', (_, res) => res.json({ ok: true, message: "Backend root working" }))
